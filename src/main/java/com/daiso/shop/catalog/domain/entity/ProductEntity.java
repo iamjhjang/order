@@ -70,5 +70,24 @@ public class ProductEntity {
 
     public CategoryEntity getCategory() { return category; }
 
+    public Long getCategoryId() { return categoryId; }
+
     public boolean isActive() { return active; }
+
+    // ---- domain behaviors ----
+    public void rename(String productName) {
+        this.productName = productName;
+    }
+
+    public void changeCategory(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
 }
