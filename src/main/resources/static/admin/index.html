@@ -153,7 +153,14 @@
             <button class="secondary" @click="loadProducts">새로고침</button>
         </div>
         <table>
-            @@ -85,70 +164,180 @@
+            <thead>
+            <tr>
+                <th>코드</th>
+                <th>상품명</th>
+                <th>카테고리</th>
+                <th>상태</th>
+                <th>관리</th>
+            </tr>
             </thead>
             <tbody>
             <tr v-for="p in products" :key="p.productCode">
@@ -161,9 +168,7 @@
                 <td>{{ p.productName }}</td>
                 <td>{{ p.categoryName }} ({{ p.categoryCode }})</td>
                 <td>
-          <span class="chip" :class="p.active ? 'on' : 'off'">
-            {{ p.active ? '활성' : '비활성' }}
-          </span>
+                    <span class="chip" :class="p.active ? 'on' : 'off'">{{ p.active ? '활성' : '비활성' }}</span>
                 </td>
                 <td><button class="secondary" @click="startEdit(p)">수정</button></td>
             </tr>
@@ -334,7 +339,23 @@
 
                 const url = this.isEditMode
                     ? `/api/products/${this.form.productCode}`
-                    @@ -172,26 +361,26 @@
+                    : '/api/products';
+                const method = this.isEditMode ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    this.message = error.message || '요청 처리에 실패했습니다.';
+                    this.messageType = 'error';
+                    return;
+                }
+
+                this.message = this.isEditMode ? '상품이 수정되었습니다.' : '상품이 등록되었습니다.';
                 this.messageType = 'ok';
                 this.resetForm();
                 await this.loadProducts();
