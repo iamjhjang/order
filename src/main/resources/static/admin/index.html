@@ -11,12 +11,14 @@
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h1 { margin-top: 0; }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         label { font-size: 13px; color: #555; display:block; margin-bottom: 6px; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btns { margin-top: 18px; display: flex; gap: 10px; }
         button { border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
         .primary { background: #2563eb; color: white; }
         .secondary { background: #e5e7eb; color: #222; }
+        .danger { background: #dc2626; color: white; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
         tr:hover { background: #f8fafc; }
@@ -26,11 +28,88 @@
         .msg { margin-bottom: 12px; font-size: 14px; }
         .error { color: #b91c1c; }
         .ok { color: #166534; }
+        .actions { display: flex; gap: 8px; }
     </style>
 </head>
 <body>
 <div id="app" class="wrap">
     <h1>상품 등록/관리 어드민</h1>
+
+    <div class="card">
+        <h3>{{ isCategoryEditMode ? '카테고리 수정' : '카테고리 등록' }}</h3>
+        <div class="msg" :class="categoryMessageType">{{ categoryMessage }}</div>
+        <div class="grid-5">
+            <div>
+                <label>카테고리 코드</label>
+                <input v-model="categoryForm.categoryCode" :disabled="isCategoryEditMode" placeholder="예: FOOD" />
+            </div>
+            <div>
+                <label>카테고리명</label>
+                <input v-model="categoryForm.categoryName" placeholder="예: 식품" />
+            </div>
+            <div>
+                <label>부모 카테고리</label>
+                <select v-model="categoryForm.parentCategoryCode">
+                    <option value="">없음(루트)</option>
+                    <option v-for="c in categories" :key="`parent-${c.categoryCode}`" :value="c.categoryCode">
+                        {{ c.categoryName }} ({{ c.categoryCode }})
+                    </option>
+                </select>
+            </div>
+            <div>
+                <label>정렬 순서</label>
+                <input v-model.number="categoryForm.sortOrder" type="number" min="0" placeholder="0" />
+            </div>
+            <div>
+                <label>활성 여부</label>
+                <select v-model="categoryForm.active">
+                    <option :value="true">활성</option>
+                    <option :value="false">비활성</option>
+                </select>
+            </div>
+        </div>
+        <div class="btns">
+            <button class="primary" @click="submitCategoryForm">{{ isCategoryEditMode ? '수정 저장' : '신규 등록' }}</button>
+            <button class="secondary" @click="resetCategoryForm">초기화</button>
+            <button v-if="isCategoryEditMode" class="secondary" @click="cancelCategoryEdit">수정 취소</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>카테고리 목록</h3>
+        <div class="btns" style="margin:0 0 14px 0">
+            <button class="secondary" @click="loadCategories">새로고침</button>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>코드</th>
+                <th>카테고리명</th>
+                <th>부모 카테고리</th>
+                <th>정렬순서</th>
+                <th>상태</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="c in categories" :key="c.categoryCode">
+                <td>{{ c.categoryCode }}</td>
+                <td>{{ c.categoryName }}</td>
+                <td>{{ parentCategoryLabel(c.parentId) }}</td>
+                <td>{{ c.sortOrder }}</td>
+                <td>
+                    <span class="chip" :class="c.active ? 'on' : 'off'">{{ c.active ? '활성' : '비활성' }}</span>
+                </td>
+                <td>
+                    <div class="actions">
+                        <button class="secondary" @click="startCategoryEdit(c)">수정</button>
+                        <button class="danger" @click="deleteCategory(c)">삭제</button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="card">
         <h3>{{ isEditMode ? '상품 수정' : '상품 등록' }}</h3>
@@ -48,7 +127,7 @@
                 <label>카테고리</label>
                 <select v-model="form.categoryCode">
                     <option disabled value="">카테고리 선택</option>
-                    <option v-for="c in categories" :key="c.categoryCode" :value="c.categoryCode">
+                    <option v-for="c in categories" :key="`product-${c.categoryCode}`" :value="c.categoryCode">
                         {{ c.categoryName }} ({{ c.categoryCode }})
                     </option>
                 </select>
@@ -74,14 +153,7 @@
             <button class="secondary" @click="loadProducts">새로고침</button>
         </div>
         <table>
-            <thead>
-            <tr>
-                <th>코드</th>
-                <th>상품명</th>
-                <th>카테고리</th>
-                <th>상태</th>
-                <th>관리</th>
-            </tr>
+            @@ -85,70 +164,180 @@
             </thead>
             <tbody>
             <tr v-for="p in products" :key="p.productCode">
@@ -107,14 +179,25 @@
         data() {
             return {
                 categories: [],
+                categoryById: {},
                 products: [],
                 isEditMode: false,
+                isCategoryEditMode: false,
                 message: '',
                 messageType: '',
+                categoryMessage: '',
+                categoryMessageType: '',
                 form: {
                     productCode: '',
                     productName: '',
                     categoryCode: '',
+                    active: true
+                },
+                categoryForm: {
+                    categoryCode: '',
+                    categoryName: '',
+                    parentCategoryCode: '',
+                    sortOrder: 0,
                     active: true
                 }
             }
@@ -124,9 +207,108 @@
             this.loadProducts();
         },
         methods: {
+            parentCategoryLabel(parentId) {
+                if (!parentId) return '-';
+                const parent = this.categoryById[parentId];
+                if (!parent) return `ID:${parentId}`;
+                return `${parent.categoryName} (${parent.categoryCode})`;
+            },
             async loadCategories() {
-                const res = await fetch('/api/categories?activeOnly=false');
-                this.categories = await res.json();
+                const res = await fetch('/api/categories/all?activeOnly=false');
+                const data = await res.json();
+                this.categories = data;
+                this.categoryById = Object.fromEntries(data.map(c => [c.categoryId, c]));
+            },
+            async submitCategoryForm() {
+                this.categoryMessage = '';
+                this.categoryMessageType = '';
+
+                if (!this.categoryForm.categoryCode || !this.categoryForm.categoryName) {
+                    this.categoryMessage = '필수값(카테고리 코드, 카테고리명)을 입력해 주세요.';
+                    this.categoryMessageType = 'error';
+                    return;
+                }
+
+                if (this.categoryForm.parentCategoryCode === this.categoryForm.categoryCode) {
+                    this.categoryMessage = '부모 카테고리는 자기 자신이 될 수 없습니다.';
+                    this.categoryMessageType = 'error';
+                    return;
+                }
+
+                const payload = {
+                    categoryCode: this.categoryForm.categoryCode,
+                    categoryName: this.categoryForm.categoryName,
+                    parentCategoryCode: this.categoryForm.parentCategoryCode || null,
+                    sortOrder: Number.isInteger(this.categoryForm.sortOrder) ? this.categoryForm.sortOrder : 0,
+                    active: this.categoryForm.active
+                };
+
+                const url = this.isCategoryEditMode
+                    ? `/api/categories/${this.categoryForm.categoryCode}`
+                    : '/api/categories';
+                const method = this.isCategoryEditMode ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    this.categoryMessage = error.message || '요청 처리에 실패했습니다.';
+                    this.categoryMessageType = 'error';
+                    return;
+                }
+
+                this.categoryMessage = this.isCategoryEditMode ? '카테고리가 수정되었습니다.' : '카테고리가 등록되었습니다.';
+                this.categoryMessageType = 'ok';
+                this.resetCategoryForm();
+                await this.loadCategories();
+            },
+            startCategoryEdit(category) {
+                this.isCategoryEditMode = true;
+                this.categoryForm.categoryCode = category.categoryCode;
+                this.categoryForm.categoryName = category.categoryName;
+                this.categoryForm.parentCategoryCode = this.categoryById[category.parentId]?.categoryCode || '';
+                this.categoryForm.sortOrder = category.sortOrder;
+                this.categoryForm.active = category.active;
+            },
+            cancelCategoryEdit() {
+                this.resetCategoryForm();
+            },
+            resetCategoryForm() {
+                this.isCategoryEditMode = false;
+                this.categoryForm.categoryCode = '';
+                this.categoryForm.categoryName = '';
+                this.categoryForm.parentCategoryCode = '';
+                this.categoryForm.sortOrder = 0;
+                this.categoryForm.active = true;
+            },
+            async deleteCategory(category) {
+                this.categoryMessage = '';
+                this.categoryMessageType = '';
+
+                const confirmed = window.confirm(`카테고리 ${category.categoryName} (${category.categoryCode}) 를 삭제하시겠습니까?`);
+                if (!confirmed) {
+                    return;
+                }
+
+                const res = await fetch(`/api/categories/${category.categoryCode}`, { method: 'DELETE' });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    this.categoryMessage = error.message || '삭제 처리에 실패했습니다.';
+                    this.categoryMessageType = 'error';
+                    return;
+                }
+
+                this.categoryMessage = '카테고리가 삭제되었습니다.';
+                this.categoryMessageType = 'ok';
+                if (this.isCategoryEditMode && this.categoryForm.categoryCode === category.categoryCode) {
+                    this.resetCategoryForm();
+                }
+                await this.loadCategories();
             },
             async loadProducts() {
                 const res = await fetch('/api/products?activeOnly=false&size=200&sort=productId,desc');
@@ -152,23 +334,7 @@
 
                 const url = this.isEditMode
                     ? `/api/products/${this.form.productCode}`
-                    : '/api/products';
-                const method = this.isEditMode ? 'PUT' : 'POST';
-
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) {
-                    const error = await res.json();
-                    this.message = error.message || '요청 처리에 실패했습니다.';
-                    this.messageType = 'error';
-                    return;
-                }
-
-                this.message = this.isEditMode ? '상품이 수정되었습니다.' : '상품이 등록되었습니다.';
+                    @@ -172,26 +361,26 @@
                 this.messageType = 'ok';
                 this.resetForm();
                 await this.loadProducts();
