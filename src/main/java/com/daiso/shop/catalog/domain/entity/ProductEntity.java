@@ -63,30 +63,12 @@ public class ProductEntity {
         return e;
     }
 
-    // ---- 도메인 변경 메서드(Setter 최소화) ----
-    public void rename(String productName) {
-        this.productName = productName;
-    }
-
-    public void changeCategory(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public void activate() { this.active = true; }
-    public void deactivate() { this.active = false; }
-
     // ---- getters ----
     public Long getProductId() { return productId; }
     public String getProductCode() { return productCode; }
     public String getProductName() { return productName; }
 
-    public Long getCategoryId() { return categoryId; }
     public CategoryEntity getCategory() { return category; }
 
     public boolean isActive() { return active; }
-
-    public String getCreateId() { return createId; }
-    public LocalDateTime getCreateDt() { return createDt; }
-    public String getUpdateId() { return updateId; }
-    public LocalDateTime getUpdateDt() { return updateDt; }
 }

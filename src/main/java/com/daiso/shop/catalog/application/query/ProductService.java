@@ -64,6 +64,42 @@ public class ProductService {
         return page.map(this::toView);
     }
 
+    @Transactional
+    public ProductView create(String productCode, String productName, String categoryCode, boolean active) {
+        if (productRepository.existsByProductCode(productCode)) {
+            throw new IllegalArgumentException("Product code already exists. code=" + productCode);
+        }
+
+        CategoryEntity category = categoryRepository.findByCategoryCode(categoryCode)
+                .orElseThrow(() -> new NotFoundException("Category not found. code=" + categoryCode));
+
+        ProductEntity product = ProductEntity.create(productCode, productName, category.getCategoryId());
+        if (!active) {
+            product.deactivate();
+        }
+
+        return toView(productRepository.save(product));
+    }
+
+    @Transactional
+    public ProductView update(String productCode, String productName, String categoryCode, boolean active) {
+        ProductEntity product = productRepository.findByProductCode(productCode)
+                .orElseThrow(() -> new NotFoundException("Product not found. code=" + productCode));
+
+        CategoryEntity category = categoryRepository.findByCategoryCode(categoryCode)
+                .orElseThrow(() -> new NotFoundException("Category not found. code=" + categoryCode));
+
+        product.rename(productName);
+        product.changeCategory(category.getCategoryId());
+        if (active) {
+            product.activate();
+        } else {
+            product.deactivate();
+        }
+
+        return toView(product);
+    }
+
     private Pageable sanitizePageable(Pageable pageable) {
         Sort safeSort = pageable.getSort().stream()
                 .filter(order -> ALLOWED_SORT_PROPERTIES.contains(order.getProperty()))
@@ -86,7 +122,7 @@ public class ProductService {
                 c == null ? null : c.getCategoryId(),
                 c == null ? null : c.getCategoryCode(),
                 c == null ? null : c.getCategoryName(),
-                Boolean.TRUE.equals(p.isActive())
+                p.isActive()
         );
     }
 }

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>상품 관리 어드민</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f5f6f8; }
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h1 { margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        label { font-size: 13px; color: #555; display:block; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btns { margin-top: 18px; display: flex; gap: 10px; }
+        button { border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+        .primary { background: #2563eb; color: white; }
+        .secondary { background: #e5e7eb; color: #222; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #f8fafc; }
+        .chip { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+        .on { background: #dcfce7; color: #166534; }
+        .off { background: #fee2e2; color: #991b1b; }
+        .msg { margin-bottom: 12px; font-size: 14px; }
+        .error { color: #b91c1c; }
+        .ok { color: #166534; }
+    </style>
+</head>
+<body>
+<div id="app" class="wrap">
+    <h1>상품 등록/관리 어드민</h1>
+
+    <div class="card">
+        <h3>{{ isEditMode ? '상품 수정' : '상품 등록' }}</h3>
+        <div class="msg" :class="messageType">{{ message }}</div>
+        <div class="grid">
+            <div>
+                <label>상품 코드</label>
+                <input v-model="form.productCode" :disabled="isEditMode" placeholder="예: P1001" />
+            </div>
+            <div>
+                <label>상품명</label>
+                <input v-model="form.productName" placeholder="예: 고양이 간식" />
+            </div>
+            <div>
+                <label>카테고리</label>
+                <select v-model="form.categoryCode">
+                    <option disabled value="">카테고리 선택</option>
+                    <option v-for="c in categories" :key="c.categoryCode" :value="c.categoryCode">
+                        {{ c.categoryName }} ({{ c.categoryCode }})
+                    </option>
+                </select>
+            </div>
+            <div>
+                <label>활성 여부</label>
+                <select v-model="form.active">
+                    <option :value="true">활성</option>
+                    <option :value="false">비활성</option>
+                </select>
+            </div>
+        </div>
+        <div class="btns">
+            <button class="primary" @click="submitForm">{{ isEditMode ? '수정 저장' : '신규 등록' }}</button>
+            <button class="secondary" @click="resetForm">초기화</button>
+            <button v-if="isEditMode" class="secondary" @click="cancelEdit">수정 취소</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>상품 목록</h3>
+        <div class="btns" style="margin:0 0 14px 0">
+            <button class="secondary" @click="loadProducts">새로고침</button>
+        </div>
+        <table>
+            <thead>
+            <tr>
+                <th>코드</th>
+                <th>상품명</th>
+                <th>카테고리</th>
+                <th>상태</th>
+                <th>관리</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="p in products" :key="p.productCode">
+                <td>{{ p.productCode }}</td>
+                <td>{{ p.productName }}</td>
+                <td>{{ p.categoryName }} ({{ p.categoryCode }})</td>
+                <td>
+          <span class="chip" :class="p.active ? 'on' : 'off'">
+            {{ p.active ? '활성' : '비활성' }}
+          </span>
+                </td>
+                <td><button class="secondary" @click="startEdit(p)">수정</button></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                categories: [],
+                products: [],
+                isEditMode: false,
+                message: '',
+                messageType: '',
+                form: {
+                    productCode: '',
+                    productName: '',
+                    categoryCode: '',
+                    active: true
+                }
+            }
+        },
+        mounted() {
+            this.loadCategories();
+            this.loadProducts();
+        },
+        methods: {
+            async loadCategories() {
+                const res = await fetch('/api/categories?activeOnly=false');
+                this.categories = await res.json();
+            },
+            async loadProducts() {
+                const res = await fetch('/api/products?activeOnly=false&size=200&sort=productId,desc');
+                const data = await res.json();
+                this.products = data.content;
+            },
+            async submitForm() {
+                this.message = '';
+                this.messageType = '';
+
+                if (!this.form.productCode || !this.form.productName || !this.form.categoryCode) {
+                    this.message = '필수값(상품 코드, 상품명, 카테고리)을 입력해 주세요.';
+                    this.messageType = 'error';
+                    return;
+                }
+
+                const payload = {
+                    productCode: this.form.productCode,
+                    productName: this.form.productName,
+                    categoryCode: this.form.categoryCode,
+                    active: this.form.active
+                };
+
+                const url = this.isEditMode
+                    ? `/api/products/${this.form.productCode}`
+                    : '/api/products';
+                const method = this.isEditMode ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    this.message = error.message || '요청 처리에 실패했습니다.';
+                    this.messageType = 'error';
+                    return;
+                }
+
+                this.message = this.isEditMode ? '상품이 수정되었습니다.' : '상품이 등록되었습니다.';
+                this.messageType = 'ok';
+                this.resetForm();
+                await this.loadProducts();
+            },
+            startEdit(product) {
+                this.isEditMode = true;
+                this.form.productCode = product.productCode;
+                this.form.productName = product.productName;
+                this.form.categoryCode = product.categoryCode;
+                this.form.active = product.active;
+            },
+            cancelEdit() {
+                this.resetForm();
+            },
+            resetForm() {
+                this.isEditMode = false;
+                this.form.productCode = '';
+                this.form.productName = '';
+                this.form.categoryCode = '';
+                this.form.active = true;
+            }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

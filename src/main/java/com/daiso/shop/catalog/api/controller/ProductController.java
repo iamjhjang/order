@@ -1,5 +1,6 @@
 package com.daiso.shop.catalog.api.controller;
 
+import com.daiso.shop.catalog.api.dto.ProductUpsertRequest;
 import com.daiso.shop.catalog.application.query.ProductService;
 import com.daiso.shop.catalog.application.query.dto.ProductView;
 import org.springframework.data.domain.Page;
@@ -42,5 +43,29 @@ public class ProductController {
             Pageable pageable
     ) {
         return productService.listByCategoryCode(categoryCode, activeOnly, pageable);
+    }
+
+
+    @PostMapping("/products")
+    public ProductView create(@RequestBody ProductUpsertRequest request) {
+        return productService.create(
+                request.productCode(),
+                request.productName(),
+                request.categoryCode(),
+                request.active()
+        );
+    }
+
+    @PutMapping("/products/{productCode}")
+    public ProductView update(
+            @PathVariable String productCode,
+            @RequestBody ProductUpsertRequest request
+    ) {
+        return productService.update(
+                productCode,
+                request.productName(),
+                request.categoryCode(),
+                request.active()
+        );
     }
 }

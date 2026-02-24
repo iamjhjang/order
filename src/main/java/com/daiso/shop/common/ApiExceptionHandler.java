@@ -16,4 +16,12 @@ public class ApiExceptionHandler {
                 "message", e.getMessage()
         );
     }
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleBadRequest(IllegalArgumentException e) {
+        return Map.of(
+                "code", "BAD_REQUEST",
+                "message", e.getMessage()
+        );
+    }
 }
