@@ -1,5 +1,7 @@
 package com.daiso.shop.catalog.api.controller;
 
+import com.daiso.shop.catalog.api.dto.CategoryUpsertRequest;
+
 import com.daiso.shop.catalog.application.query.CategoryService;
 import com.daiso.shop.catalog.application.query.dto.CategoryView;
 import org.springframework.web.bind.annotation.*;
@@ -39,5 +41,40 @@ public class CategoryController {
             @RequestParam(defaultValue = "true") boolean activeOnly
     ) {
         return categoryService.listChildren(parentCategoryCode, activeOnly);
+    }
+
+    @GetMapping("/all")
+    public List<CategoryView> listAll(@RequestParam(defaultValue = "true") boolean activeOnly) {
+        return categoryService.listAll(activeOnly);
+    }
+
+    @PostMapping
+    public CategoryView create(@RequestBody CategoryUpsertRequest request) {
+        return categoryService.create(
+                request.categoryCode(),
+                request.categoryName(),
+                request.parentCategoryCode(),
+                request.sortOrder(),
+                request.active()
+        );
+    }
+
+    @PutMapping("/{categoryCode}")
+    public CategoryView update(
+            @PathVariable String categoryCode,
+            @RequestBody CategoryUpsertRequest request
+    ) {
+        return categoryService.update(
+                categoryCode,
+                request.categoryName(),
+                request.parentCategoryCode(),
+                request.sortOrder(),
+                request.active()
+        );
+    }
+
+    @DeleteMapping("/{categoryCode}")
+    public void delete(@PathVariable String categoryCode) {
+        categoryService.delete(categoryCode);
     }
 }

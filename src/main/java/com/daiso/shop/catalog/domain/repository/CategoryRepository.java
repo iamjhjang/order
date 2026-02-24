@@ -3,6 +3,8 @@ package com.daiso.shop.catalog.domain.repository;
 import com.daiso.shop.catalog.domain.entity.CategoryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +17,6 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, Long> 
 
     List<CategoryEntity> findByParentId(Long parentId);
     List<CategoryEntity> findByParentIdAndActiveTrue(Long parentId);
+
+    List<CategoryEntity> findByActiveTrue(Sort sort);
 }
