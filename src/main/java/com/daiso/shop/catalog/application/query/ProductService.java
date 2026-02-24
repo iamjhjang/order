@@ -67,7 +67,8 @@ public class ProductService {
     private Pageable sanitizePageable(Pageable pageable) {
         Sort safeSort = pageable.getSort().stream()
                 .filter(order -> ALLOWED_SORT_PROPERTIES.contains(order.getProperty()))
-                .collect(Sort::by, Sort::and, Sort::and);
+                .map(Sort::by)
+                .reduce(Sort.unsorted(), Sort::and);
 
         if (safeSort.isUnsorted()) {
             safeSort = Sort.by(Sort.Order.asc("productId"));
