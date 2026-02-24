@@ -1,8 +1,8 @@
-package com.daiso.shop.category.application.query;
+package com.daiso.shop.catalog.application.query;
 
-import com.daiso.shop.category.application.query.dto.CategoryView;
-import com.daiso.shop.category.domain.entity.CategoryEntity;
-import com.daiso.shop.category.domain.repository.CategoryRepository;
+import com.daiso.shop.catalog.application.query.dto.CategoryView;
+import com.daiso.shop.catalog.domain.entity.CategoryEntity;
+import com.daiso.shop.catalog.domain.repository.CategoryRepository;
 import com.daiso.shop.common.NotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

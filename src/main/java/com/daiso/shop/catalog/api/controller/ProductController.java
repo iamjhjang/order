@@ -1,7 +1,7 @@
-package com.daiso.shop.category.api.controller;
+package com.daiso.shop.catalog.api.controller;
 
-import com.daiso.shop.category.application.query.ProductService;
-import com.daiso.shop.category.application.query.dto.ProductView;
+import com.daiso.shop.catalog.application.query.ProductService;
+import com.daiso.shop.catalog.application.query.dto.ProductView;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;

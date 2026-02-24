@@ -1,4 +1,4 @@
-package com.daiso.shop.category.domain.entity;
+package com.daiso.shop.catalog.domain.entity;
 
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedBy;

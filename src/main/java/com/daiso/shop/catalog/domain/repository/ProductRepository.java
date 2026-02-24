@@ -1,7 +1,7 @@
-package com.daiso.shop.category.domain.repository;
+package com.daiso.shop.catalog.domain.repository;
 
-import com.daiso.shop.category.domain.entity.CategoryEntity;
-import com.daiso.shop.category.domain.entity.ProductEntity;
+import com.daiso.shop.catalog.domain.entity.CategoryEntity;
+import com.daiso.shop.catalog.domain.entity.ProductEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +13,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Optional<ProductEntity> findByProductCode(String productCode);
 
     Page<ProductEntity> findByCategory(CategoryEntity category, Pageable pageable);
-    Page<ProductEntity> findByCategoryAndIsActiveTrue(CategoryEntity category, Pageable pageable);
+    Page<ProductEntity> findByCategoryAndActiveTrue(CategoryEntity category, Pageable pageable);
 
-    Page<ProductEntity> findByIsActiveTrue(Pageable pageable);
+    Page<ProductEntity> findByActiveTrue(Pageable pageable);
 }

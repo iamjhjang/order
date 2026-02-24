@@ -1,4 +1,4 @@
-package com.daiso.shop.category.application.query.dto;
+package com.daiso.shop.catalog.application.query.dto;
 
 public record ProductView(
         Long productId,

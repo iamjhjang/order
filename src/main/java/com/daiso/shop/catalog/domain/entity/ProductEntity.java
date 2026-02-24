@@ -1,6 +1,5 @@
-package com.daiso.shop.category.domain.entity; // <- 패키지는 보통 product 쪽으로 분리 권장
+package com.daiso.shop.catalog.domain.entity; // <- 패키지는 보통 product 쪽으로 분리 권장
 
-import com.daiso.shop.category.domain.entity.CategoryEntity;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;

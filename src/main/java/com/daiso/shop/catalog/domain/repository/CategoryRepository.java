@@ -1,6 +1,6 @@
-package com.daiso.shop.category.domain.repository;
+package com.daiso.shop.catalog.domain.repository;
 
-import com.daiso.shop.category.domain.entity.CategoryEntity;
+import com.daiso.shop.catalog.domain.entity.CategoryEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
